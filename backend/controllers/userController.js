@@ -1,7 +1,12 @@
 import userModel from "../models/userModel.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import crypto from 'crypto';
 import validator from "validator";
+
+// Fonction pour hacher le mot de passe
+const hashPassword = (password) => {
+  return crypto.createHash('sha256').update(password).digest('hex');
+};
 
 // login user
 
@@ -12,7 +17,8 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.json({ success: false, message: "User Doesn't exist" });
     }
-    const isMatch =await bcrypt.compare(password, user.password);
+    const hashedPassword = hashPassword(password);
+    const isMatch = hashedPassword === user.password;
     if (!isMatch) {
       return res.json({ success: false, message: "Invalid Credentials" });
     }
@@ -54,9 +60,7 @@ const registerUser = async (req, res) => {
     }
 
     // hashing user password
-
-    const salt = await bcrypt.genSalt(Number(process.env.SALT));
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = hashPassword(password);
 
     const newUser = new userModel({
       name: name,

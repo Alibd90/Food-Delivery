@@ -1,0 +1,66 @@
+services:
+  # Service MongoDB
+  mongo:
+    image: mongo:latest
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - food-delivery-network
+
+  # Service Backend
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:5000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/food-delivery
+      - PORT=5000
+      - NODE_ENV=production
+      - JWT_SECRET=your_jwt_secret
+    networks:
+      - food-delivery-network
+
+  # Service Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - food-delivery-network
+
+  # Service Admin
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - food-delivery-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  food-delivery-network:
+    driver: bridge
